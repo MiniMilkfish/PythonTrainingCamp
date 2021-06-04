@@ -3,23 +3,21 @@ import numpy as np
 import json
 import os
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpathes
-from skimage import io
-from skimage.io.collection import MultiImage
 
 catlogDir = os.getcwd()
 
-fileDate = '20210423074550'
-filenameCatlog = catlogDir + "/static/json/" + fileDate + ".json"
-baseImgCatlog = catlogDir + "/static/img/baseImg.png"
-targetBeforeComposeCatlog = catlogDir + '/temp/' + fileDate + '.png'
-targetAfterComposeCatlog = catlogDir + '/temp/afterCompose.png'
+# 雷达坐标
+radarPosition = {'lat': 30.31394, 'lng': 120.132759}
+# 探测数据文件名称
+originFileName = '20210423074550'
 
-f_obj = open(filenameCatlog)
+# 探测数据文件目录、存储文件目录
+originFileCatelog = catlogDir + "/static/json/" + originFileName + ".json"
+targetComposeCatlog = catlogDir + '/temp/' + originFileName + '.png'
+
+# 探测数据文件序列化
+f_obj = open(originFileCatelog)
 datas = json.load(f_obj)
-
-# 平面坐标系：已知起点、方位角、距离，求坐标
-# axPosition = lambda angle,distance:[distance * np.cos(angle), distance * np.sin(angle)]
 
 # 球面（地球）坐标系：已知起点、方位角、距离，求坐标
 # var rate = Math.cos(startPoint.lat * Math.PI / 180); // 指定维度球面长度和赤道长度的比率
@@ -29,17 +27,8 @@ datas = json.load(f_obj)
 #     var y = Math.cos(r) * distance;
 #     x = x / lat_meter / rate; // x偏移量需要根据所在维度进行计算
 #     y = y / lat_meter;
-rate = np.cos(np.pi / 180)          # 指定维度球面长度和赤道长度的比率
+rate = np.cos(radarPosition['lat'] * np.pi / 180)          # 指定维度球面长度和赤道长度的比率
 axPosition = lambda angle,distance:[np.sin(angle * np.pi / 180.0) * distance / rate, np.cos(angle * np.pi / 180.0) * distance]
-
-# 绘制边界
-# fig, ax = plt.subplots()
-# boundary = mpathes.Circle(np.array([0, 0]), 7, fill=False, color="red")
-# print(type(boundary), boundary)
-# ax.add_patch(boundary)
-
-# 插入底图
-# baseImg = plt.imread(baseImgCatlog)
 
 contourfC = None
 contourC = None
@@ -50,6 +39,7 @@ ax = fig.add_subplot()
 boundary = plt.Circle(np.array([0, 0]), radius=7, color='#C5C6C5', fill=False, linewidth=1.0)
 ax.add_patch(boundary)
 
+# 径向数据处理
 for lineData in datas:
     x = []
     y = []
@@ -83,42 +73,11 @@ for lineData in datas:
         linestyles='solid',
         alpha=1
     )
-    # contourC.set_cmap('hot')
-    # contourC.set_clim(0, 800)
-
-# 嵌入底图
-# plt.imshow(baseImg, extent=[-8, 8, -8, 8]) 
-
-# 颜色条
-# plt.colorbar(contourfC, ticks=[0, 50, 100, 150, 200, 300, 500, 800])
 
 # 坐标轴
 plt.xticks(np.arange(-8, 9))
 plt.yticks(np.arange(-8, 9))
-
 plt.axis('off')
 
 # 图片生成
-plt.savefig(targetBeforeComposeCatlog, dpi=300, bbox_inches='tight', transparent=True)
-
-# ------------------------------------------------
-# # 正片叠底算法
-# imgMultiply = lambda imga, imgb:imga * imgb
-
-# # 正片叠底构建合成图
-# beforeComposeImg = io.imread(targetBeforeComposeCatlog)
-# beforeComposeImg = beforeComposeImg/255.0
-# print(type(beforeComposeImg), len(beforeComposeImg))
-
-# bottomBackgroundImg = io.imread(baseImgCatlog)
-# bottomBackgroundImg = bottomBackgroundImg/255.0
-# print(type(bottomBackgroundImg), len(bottomBackgroundImg))
-
-# targetComposeI = imgMultiply(bottomBackgroundImg, beforeComposeImg)
-# print(type(targetComposeI), len(targetComposeI))
-
-# io.imsave(targetAfterComposeCatlog, targetComposeI)
-# ------------------------------------------------
-
-# 窗口展示
-# plt.show() 
+plt.savefig(targetComposeCatlog, dpi=300, bbox_inches='tight', transparent=True)
